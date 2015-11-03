@@ -1,4 +1,3 @@
-
 <%inherit file="base.mako"/>
 
 <%def name="title()">Account Settings</%def>
@@ -64,12 +63,20 @@
                                 <!-- /ko -->
                                 <tr>
                                     <td colspan="3">
-                                        <form data-bind="submit: addEmail">
+                                    
+                                       <script>
+                                          function addEmailWithMerge() {
+                                             addEmail
+                                             $parent.resendConfirmation
+                                          }
+                                       </script>
+                                    
+                                        <form data-bind="submit: addAndMergeEmails">
                                             <p>To merge an existing account with this one or to log in with multiple email addresses, add an alternate email address below.</p>
 
                                             <div class="form-group">
                                                 ## email input verification is not supported on safari
-                                              <input placeholder="Email address" type="email" data-bind="value: emailInput" class="form-control" required maxlength="254">
+                                              <input placeholder="Email address" type="email" data-bind="value: emailInput, submit: $parent.resendConfirmation" class="form-control" required maxlength="254">
                                             </div>
                                             <input type="submit" value="Add Email" class="btn btn-success">
                                         </form>

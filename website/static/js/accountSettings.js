@@ -183,11 +183,9 @@ var UserProfileViewModel = oop.extend(ChangeMessageMixin, {
         this.changeMessage('', 'text-info');
         var newEmail = this.emailInput().toLowerCase().trim();
         if(newEmail){
-
             var email = new UserEmail({
                 address: newEmail
-            });
-
+            });            
             // ensure email isn't already in the list
             for (var i=0; i<this.profile().emails().length; i++) {
                 if (this.profile().emails()[i].address() === email.address()) {
@@ -195,19 +193,77 @@ var UserProfileViewModel = oop.extend(ChangeMessageMixin, {
                     this.emailInput('');
                     return;
                 }
-            }
-
+            }            
             this.profile().emails.push(email);
 
             this.client.update(this.profile()).done(function (profile) {
                 this.profile(profile);
 
+                // IF EMAIL ASSOCIATED WITH ANOTHER ACCOUNT, THEN MERGE MODAL
+                // OTHERWISE, CONTINUE    
                 var emails = profile.emails();
                 for (var i=0; i<emails.length; i++) {
+                    //document.write(Object.getOwnPropertyNames(emails[i]));  //address, isConfirmed, isPrimary
+                    //document.write("ADDRESS: " + emails[i].address);
                     if (emails[i].address() === email.address()) {
                         this.emailInput('');
                         var addrText = $osf.htmlEscape(email.address());
                         $osf.growl('<em>' + addrText  + '</em> added to your account.','You will receive a confirmation email at <em>' + addrText  + '</em>. Please check your email and confirm.', 'success');
+                        return;
+                    }
+                }
+            }.bind(this)).fail(function(){
+                this.profile().emails.remove(email);
+            }.bind(this));
+        } else {
+            this.changeMessage('Email cannot be empty.', 'text-danger');
+        }
+    },
+    addAndMergeEmails: function() {
+        this.changeMessage('', 'text-info');
+        var newEmail = this.emailInput().toLowerCase().trim();
+        if(newEmail){
+            var email = new UserEmail({
+                address: newEmail
+            });            
+            // ensure email isn't already in the list
+            for (var i=0; i<this.profile().emails().length; i++) {
+                if (this.profile().emails()[i].address() === email.address()) {
+                    this.changeMessage('Duplicate Email', 'text-warning');
+                    this.emailInput('');
+                    return;
+                }
+            }            
+            this.profile().emails.push(email);
+
+            this.client.update(this.profile()).done(function (profile) {
+                this.profile(profile);
+   
+                var emails = profile.emails();
+                for (var i=0; i<emails.length; i++) {
+                    var newEmail = emails[i];
+                    if (emails[i].address() === email.address()) {
+                        this.emailInput('');
+                        var addrText = $osf.htmlEscape(email.address());
+                        if (emails[i].isConfirmed() == true) { 
+                            bootbox.confirm({
+                                title: 'Merge Accounts?',
+                                message: 'There is another OSF account associated with ' + '<em>' + addrText + '</em>. Would you like to merge that account with this one? ',
+                                callback: function (confirmed) {
+                                    if (confirmed) {
+                                            $osf.growl('<em>' + addrText  + '</em> added to your account.','You will receive a confirmation email at <em>' + addrText  + '</em>. Please check your email and confirm.', 'success');
+                                    }
+                                },
+                                buttons:{
+                                    confirm:{
+                                        label:'Merge Accounts'
+                                    }
+                                }
+                            });
+                        }
+                        else {
+                            $osf.growl('<em>' + addrText  + '</em> added to your account.','You will receive a confirmation email at <em>' + addrText  + '</em>. Please check your email and confirm.', 'success');
+                        }
                         return;
                     }
                 }
