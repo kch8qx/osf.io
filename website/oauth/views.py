@@ -4,8 +4,10 @@ import httplib as http
 
 from flask import redirect
 
+from framework.auth.core import User
 from framework.auth.decorators import must_be_logged_in
 from framework.exceptions import HTTPError
+from modularodm import Q
 from website.oauth.models import ExternalAccount
 from website.oauth.utils import get_service
 from website.oauth.signals import oauth_complete
@@ -54,3 +56,17 @@ def oauth_callback(service_name, auth):
     oauth_complete.send(provider, account=provider.account, user=user)
 
     return {}
+
+def is_already_user(email):
+    query_list = []
+    if email is not None:
+        email = email.strip().lower()
+        query_list.append(Q('emails', 'eq', email) | Q('username', 'eq', email))
+        query = query_list[0]
+        try:
+            user = User.find_one(query)
+            if user is not None:
+                return True
+        except:
+            return False
+    

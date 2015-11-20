@@ -20,6 +20,9 @@ from framework.auth import views as auth_views
 from framework.routing import render_mako_string
 from framework.auth.core import _get_current_user
 
+'''ADDED'''
+from framework.auth import core as oauth_core
+
 from website import util
 from website import settings
 from website import language
@@ -269,8 +272,12 @@ def make_url_map(app):
             oauth_views.oauth_callback,
             OsfWebRenderer('util/oauth_complete.mako'),
         ),
+        
+        
+        
     ])
-
+    
+    
     process_rules(app, [
         Rule(
             [
@@ -279,7 +286,16 @@ def make_url_map(app):
             'delete',
             oauth_views.oauth_disconnect,
             json_renderer,
-        )
+        ),
+        
+        Rule( 
+            [
+            '/oauth/checkuser/<email>/'
+            ],
+            'get',
+            oauth_views.is_already_user,
+            json_renderer,
+        ),
     ], prefix='/api/v1')
 
     process_rules(app, [
